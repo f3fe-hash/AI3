@@ -2,6 +2,8 @@
 
 #include <random>
 #include <memory>
+#include <thread>
+#include <mutex>
 
 #include "layers/basic_layer.hpp"
 #include "math/dataset.hpp"
@@ -33,4 +35,7 @@ public:
 
     vec<float> forward(vec<float> in);
     float backprop(const dataset_t& dataset);
+
+    void save(const std::string& filename);
+    void load(const std::string& filename);
 };

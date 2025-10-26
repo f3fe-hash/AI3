@@ -15,6 +15,7 @@ protected:
     size_t prev_size;
 
     std::shared_ptr<std::mt19937> gen;
+    vec<float> last_input;
 
 public:
     basic_layer(size_t size) : size(size), prev_size(0)
@@ -31,4 +32,6 @@ public:
     virtual void init(size_t prev_size);
     virtual vec<float> forward(const vec<float>& in) = 0;
     virtual vec<float> backprop(const vec<float>& grads, dataset_config_t config) = 0;
+
+    virtual std::string get_type() = 0;
 };

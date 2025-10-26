@@ -10,7 +10,8 @@ linear_layer::linear_layer(size_t size) : basic_layer(size)
 }
 
 linear_layer::~linear_layer()
-{}
+{
+}
 
 void linear_layer::init(size_t prev_size)
 {
@@ -39,6 +40,7 @@ vec<float> linear_layer::forward(const vec<float>& in)
     
     // Save input for use in backprop
     last_input = in;
+
     vec<float> out(size, 0.00f);
     for (size_t i = 0; i < size; ++i)
         out[i] = mult_add(in, weights[i], biases[i]);

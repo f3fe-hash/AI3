@@ -22,24 +22,56 @@ vec<float> NeuralNetwork::forward(vec<float> in)
 
 float NeuralNetwork::backprop(const dataset_t& dataset)
 {
-    float loss_ = 0.00f;
-    for (size_t i = 0; i < dataset.size; ++i)
+    size_t batch_count = dataset.config.num_batches;
+    if (batch_count == 0) batch_count = 1;
+
+    size_t batch_size = (dataset.size + batch_count - 1) / batch_count;
+    float loss_total = 0.0f;
+    std::mutex mtx; // for safely accumulating loss
+
+    auto worker = [&](size_t start, size_t end)
     {
-        const vec<float>& X = dataset.data[i].first;
-        const vec<float>& Y = dataset.data[i].second;
+        float thread_loss = 0.0f;
 
-        // Forward pass
-        vec<float> out = this->forward(X);
+        // Create local copies of layers for gradient accumulation
+        vec<vec2<float>> weight_grads(layers.size());
+        vec<vec<float>> bias_grads(layers.size());
 
-        loss_ += loss_functions.loss(out, Y);
+        for (size_t i = start; i < end; ++i)
+        {
+            const vec<float>& X = dataset.data[i].first;
+            const vec<float>& Y = dataset.data[i].second;
 
-        // Compute gradient of loss wrt output
-        vec<float> grad = loss_functions.grad(Y, out);
+            vec<float> out = this->forward(X);
+            thread_loss += loss_functions.loss(out, Y);
 
-        // Backward pass
-        for (int l = layers.size() - 1; l >= 0; --l)
-            grad = layers[l]->backprop(grad, dataset.config);
+            vec<float> grad = loss_functions.grad(Y, out);
+
+            for (int l = layers.size() - 1; l >= 0; --l)
+                grad = layers[l]->backprop(grad, dataset.config);
+        }
+
+        // Accumulate loss
+        std::lock_guard<std::mutex> lock(mtx);
+        loss_total += thread_loss;
+    };
+
+    std::vector<std::thread> threads;
+    for (size_t b = 0; b < batch_count; ++b)
+    {
+        size_t start = b * batch_size;
+        size_t end = std::min(start + batch_size, dataset.size);
+        threads.emplace_back(worker, start, end);
     }
 
-    return loss_;
+    for (auto& t : threads)
+        t.join();
+
+    return loss_total / dataset.size;
 }
+
+void NeuralNetwork::save(const std::string& filename)
+{}
+
+void NeuralNetwork::load(const std::string& filename)
+{}

@@ -8,8 +8,8 @@ else
 endif
 
 WARN     := -Wall -Wextra
-CXXFLAGS := $(WARN) $(OPTS) $(DEBUG) -std=c++23
-LIBS     :=
+CXXFLAGS := $(WARN) $(OPTS) $(DEBUG) -std=c++23 -I/usr/include
+LIBS     := -lsfml-graphics -lsfml-window -lsfml-system
 
 SRC_DIR     := src
 INCLUDE_DIR := include

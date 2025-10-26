@@ -65,6 +65,33 @@ inline vec<float> bce_grad(const vec<float>& target, const vec<float>& pred)
     return grad;
 }
 
+// Categorical Cross-Entropy loss
+inline float cce_loss(const vec<float>& pred, const vec<float>& target)
+{
+    float loss = 0.0f;
+    const float eps = 1e-7f; // avoid log(0)
+    for (size_t i = 0; i < pred.size(); ++i)
+    {
+        float p = std::max(std::min(pred[i], 1.0f - eps), eps);
+        loss += -target[i] * std::log(p);
+    }
+    return loss / pred.size();
+}
+
+// Gradient of Categorical Cross-Entropy wrt softmax outputs
+inline vec<float> cce_grad(const vec<float>& target, const vec<float>& pred)
+{
+    vec<float> grad(pred.size());
+    const float eps = 1e-7f;
+    const float scale = 1.0f / pred.size();
+    for (size_t i = 0; i < pred.size(); ++i)
+    {
+        float p = std::max(std::min(pred[i], 1.0f - eps), eps);
+        grad[i] = scale * (p - target[i]); // derivative of -y*log(p) w.r.t. logits after softmax
+    }
+    return grad;
+}
+
 // Factory function to get loss and gradient functions by name
 inline loss_pair get_loss(const std::string& name)
 {
@@ -73,6 +100,9 @@ inline loss_pair get_loss(const std::string& name)
     
     else if (name == "bce" || name == "binary-cross-entropy")
         return {bce_loss, bce_grad};
+    
+    else if (name == "cce" || name == "categorical-cross-entropy")
+        return {cce_loss, cce_grad};
     
     // Default to MSE if unknown
     return {mse_loss, mse_grad};

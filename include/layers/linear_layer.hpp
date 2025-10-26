@@ -7,8 +7,6 @@ class linear_layer : public basic_layer
 {
     vec2<float> weights;
     vec<float> biases;
-    // saved from last forward for use in backprop
-    vec<float> last_input;
 
     // gradients accumulated by backprop
     vec2<float> weight_grads;
