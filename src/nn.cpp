@@ -1,8 +1,9 @@
 #include "nn.hpp"
 
-NeuralNetwork::NeuralNetwork(vec<basic_layer *> layers_)
+NeuralNetwork::NeuralNetwork(vec<basic_layer *> layers_, const std::string& loss_type)
 {
     gen = std::make_shared<std::mt19937>(rd());
+    loss_functions = get_loss(loss_type);
     for (auto& layer : layers_)
         add_layer(layer);
 }
@@ -30,10 +31,10 @@ float NeuralNetwork::backprop(const dataset_t& dataset)
         // Forward pass
         vec<float> out = this->forward(X);
 
-        loss_ += loss(out, Y);
+        loss_ += loss_functions.loss(out, Y);
 
         // Compute gradient of loss wrt output
-        vec<float> grad = loss_grad(Y, out, out.size());
+        vec<float> grad = loss_functions.grad(Y, out);
 
         // Backward pass
         for (int l = layers.size() - 1; l >= 0; --l)

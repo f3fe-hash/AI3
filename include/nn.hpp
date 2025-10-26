@@ -5,16 +5,18 @@
 
 #include "layers/basic_layer.hpp"
 #include "math/dataset.hpp"
+#include "math/losses.hpp"
 
 class NeuralNetwork
 {
     vec<basic_layer *> layers;
+    loss_pair loss_functions;
 
     std::random_device rd{};
     std::shared_ptr<std::mt19937> gen;
 
 public:
-    NeuralNetwork(vec<basic_layer *> layers_={});
+    NeuralNetwork(vec<basic_layer *> layers_={}, const std::string& loss_type="mse");
     ~NeuralNetwork();
 
     void add_layer(basic_layer* layer)

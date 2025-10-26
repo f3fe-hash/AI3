@@ -33,21 +33,34 @@ int main()
     dataset.config.lr = 0.01;
     //dataset.config.num_batches = 1;
 
+    // For binary classification (XOR), use BCE loss
     std::unique_ptr<NeuralNetwork> nn = std::make_unique<NeuralNetwork>(
         (vec<basic_layer *>){
-            new dense_layer(2, "tanh"),
-            new dense_layer(3, "relu"),
-            new dense_layer(1, "sigmoid")
-        }
+            new dense_layer(2, "relu"),
+            new dense_layer(10, "tanh"),    // hidden layer with tanh
+            new dense_layer(1, "sigmoid")  // output layer with sigmoid for [0,1]
+        },
+        "bce"  // BCE loss for binary classification
     );
 
-    for (uint i = 0; i < 10000; ++i)
-        nn->backprop(dataset);
+    std::cout << "Training XOR with BCE loss..." << std::endl;
+    const size_t epochs = 10000;
+    for (uint i = 0; i < epochs; ++i)
+    {
+        float loss = nn->backprop(dataset);
+        if (i % 1000 == 0)
+        {
+            std::cout << "Epoch " << i << "/" << epochs 
+                     << " - Loss: " << std::fixed << std::setprecision(PRECISION) 
+                     << loss << std::endl;
+        }
+    }
 
     for (size_t i = 0; i < X.size(); ++i)
     {
         vec<float> out = nn->forward(X[i]);
-        float l = loss(y[i], out);
+        // Use BCE loss for evaluation
+        float l = bce_loss(out, y[i]);
         std::cout << "Input: ";
         print_vector(X[i]);
         std::cout << " | Output: ";
