@@ -11,6 +11,7 @@
 #include "layers/activation_layer.hpp"
 #include "layers/dense_layer.hpp"
 #include "layers/normalization_layer.hpp"
+#include "layers/gating_layer.hpp"
 
 // 2 decimal places
 #define PRECISION 2
@@ -21,30 +22,31 @@ int argmax(const vec<float>& data);
 
 int main()
 {
-    dataset_t dataset = load_csv_dataset("mnist/mnist_train.csv");
+    dataset_t dataset = load_csv_dataset("datasets/fashion/fashion_mnist_train.csv", true);
     dataset.config.lr = 0.01;
-    dataset.config.num_batches = 64;
+    dataset.config.num_batches = 32;
 
-    // Check data size
+    dataset_t test_dataset = dataset;
+
+    // Output data size
     size_t ds = dataset.data[0].first.size();
-    if (dataset.data[0].first.size() != 784)
-        std::cout << "Unexpected image size in dataset: " <<  dataset.data[0].first.size() << std::endl;
+    std::cout << "Dataset size: " <<  dataset.size << std::endl;
+    std::cout << "Dataset input size: " <<  dataset.data[0].first.size() << std::endl;
 
-    // For binary classification (XOR), use BCE loss
+    // Create neural network
     std::unique_ptr<NeuralNetwork> nn = std::make_unique<NeuralNetwork>(
         (vec<basic_layer *>){
-            new normalization_layer(ds),
-            new activation_layer(ds, "tanh"),
-            new dense_layer(256, "tanh"),
-            new dense_layer(16, "tanh"),
-            new dense_layer(16, "tanh"),
-            new dense_layer(10, "softmax")
+            new normalization_layer(ds), // Normalize inputs & linear
+            new activation_layer(ds, "tanh"), // Tanh
+            new dense_layer(32, "tanh"), // Dense
+            new dense_layer(16, "tanh"), // Dense
+            new dense_layer(10, "softmax") // Output, softmax
         },
         "cce"
     );
 
-    std::cout << "Training MNIST with CCE loss..." << std::endl;
-    const size_t epochs = 20;
+    std::cout << "Training MNIST..." << std::endl;
+    const size_t epochs = 50;
     for (uint i = 0; i < epochs; ++i)
     {
         float loss = nn->backprop(dataset);
@@ -56,17 +58,9 @@ int main()
         }
     }
 
-    for (size_t i = 0; i < 10; ++i) // show first 10 images
-    {
-        vec<float> out = nn->forward(dataset.data[i].first);
-        // Use BCE loss for evaluation
-        float l = bce_loss(out, dataset.data[i].second);
-        std::cout << "Output: " <<
-        argmax(out) << " | Conf: " << out[argmax(out)];
-        std::cout << " | Loss: " << std::fixed << std::setprecision(PRECISION) << l << std::endl;
-
-        show_image(dataset.data[i].first, i, std::sqrt(ds), std::sqrt(ds));
-    }
+    std::cout << "Testing MNIST..." << std::endl;
+    float accuracy = nn->test(test_dataset);
+    std::cout << "Accuracy: " << accuracy * 100 << '%' << std::endl;
 }
 
 // Display a single MNIST-like image (28x28 pixels) in a window
@@ -122,20 +116,4 @@ void print_vector(vec<float> data)
             std::cout << ", ";
     }
     std::cout << "]";
-}
-
-// Return the index of the largest value in a vector
-int argmax(const vec<float>& data)
-{
-    int idx = 0;
-    float max_val = data[0];
-    for (size_t i = 1; i < data.size(); ++i)
-    {
-        if (data[i] > max_val)
-        {
-            max_val = data[i];
-            idx = i;
-        }
-    }
-    return idx;
 }

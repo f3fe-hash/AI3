@@ -4,6 +4,7 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <fstream>
 
 #include "layers/basic_layer.hpp"
 #include "math/dataset.hpp"
@@ -36,6 +37,22 @@ public:
     vec<float> forward(vec<float> in);
     float backprop(const dataset_t& dataset);
 
-    void save(const std::string& filename);
-    void load(const std::string& filename);
+    float test(const dataset_t& test);
 };
+
+// Return the index of the largest value in a vector
+inline int argmax(const vec<float>& data)
+{
+    int idx = 0;
+    float max_val = data[0];
+    for (size_t i = 1; i < data.size(); ++i)
+    {
+        if (data[i] > max_val)
+        {
+            max_val = data[i];
+            idx = i;
+        }
+    }
+    
+    return idx;
+}

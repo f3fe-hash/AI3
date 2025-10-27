@@ -70,8 +70,21 @@ float NeuralNetwork::backprop(const dataset_t& dataset)
     return loss_total / dataset.size;
 }
 
-void NeuralNetwork::save(const std::string& filename)
-{}
+float NeuralNetwork::test(const dataset_t& test)
+{
+    size_t correct = 0;
 
-void NeuralNetwork::load(const std::string& filename)
-{}
+    for (size_t i = 0; i < test.size; ++i)
+    {
+        vec<float> out = forward(test.data[i].first);
+
+        // find index of max output neuron
+        size_t predicted = std::distance(out.begin(), std::max_element(out.begin(), out.end()));
+        size_t actual    = std::distance(test.data[i].second.begin(), std::max_element(test.data[i].second.begin(), test.data[i].second.end()));
+
+        if (predicted == actual)
+            ++correct;
+    }
+
+    return static_cast<float>(correct) / test.size;
+}

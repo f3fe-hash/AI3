@@ -59,3 +59,19 @@ endif
 size:
 	@wc -c < $(TARGET) | awk '{printf "%.2f KB\n", $$1 / 1000}'
 
+decompress_datasets: requirements
+	@[ -f datasets/mnist/mnist_train.csv ] || unzip datasets/mnist/mnist_train.csv.zip -d datasets/mnist/
+	@[ -f datasets/mnist/mnist_test.csv ]  || unzip datasets/mnist/mnist_test.csv.zip  -d datasets/mnist/
+	@[ -f datasets/fashion/train-images-idx3-ubyte ] || gzip -dk datasets/fashion/train-images-idx3-ubyte.gz
+	@[ -f datasets/fashion/train-labels-idx1-ubyte ]  || gzip -dk datasets/fashion/train-labels-idx1-ubyte.gz
+	@python3 ubyte-to-csv.py
+
+clean-datasets:
+	@rm -rf datasets/mnist/mnist_train.csv
+	@rm -rf datasets/mnist/mnist_test.csv
+	@rm -rf datasets/fashion/train-images-idx3-ubyte
+	@rm -rf datasets/fashion/train-labels-idx1-ubyte
+	@rm -rf datasets/fashion/fashion_mnist_train.csv
+
+requirements:
+	@pip install numpy
